@@ -9,6 +9,8 @@ import json
 from telegram import ForceReply, Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
+from utils.db.db import create_db_if_not_exist, create_tables_if_not_exist, insert_in_users, generate_new_invitations, provision_database
+
 # Load config 
 CONFIG_FILE = "resources/config.json"
 CONFIG = None
@@ -70,13 +72,23 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             if update.message.text == PASS:
                 user_from_message['blocked'] = False
                 await update.message.reply_text("Congrats! You've unlocked the echo bot")
-            # User inputs a wrong invitation value but still have chances
+            # User inputs a wrong invitation value but still have retries
             else:
                 await update.message.reply_text("Wrong code!")
 
 
 def main() -> None:
     """Start the bot."""
+
+    # DB Readiness
+    create_db_if_not_exist(CONFIG.get('db_config').get('db_file'))
+    create_tables_if_not_exist(CONFIG.get('db_config').get('db_file'))
+    provision_database(CONFIG.get('db_config').get('db_file'), 0000)
+    # generate_new_invitations(CONFIG.get('db_config').get('db_file'), 10)
+    # generate_new_invitations(CONFIG.get('db_config').get('db_file'))
+    # generate_new_invitations(CONFIG.get('db_config').get('db_file'), 10, 0)
+    # generate_new_invitations(CONFIG.get('db_config').get('db_file'), 10, 1)
+
     # Create the Application and pass it your bot's token.
     application = Application.builder().token(os.environ['TG_INVITATION_BOT_TOKEN']).build()
 
