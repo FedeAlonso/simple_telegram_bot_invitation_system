@@ -7,6 +7,18 @@ from datetime import datetime
 from pathlib import Path
 
 
+def log_and_query(conn, query):
+    """
+    Log a query and execute it.
+
+        Parameters:
+            conn (connection object): SQLite3 connection object
+            query (str): Query to execute
+    """
+    logging.info(query)
+    conn.execute(query)
+
+
 def create_db_if_not_exist(db_name):
 
     #Check if db not exists:
@@ -71,8 +83,7 @@ def insert_in_users(db_name, user_info):
         INSERT INTO USERS (ID,NAME,ROL,TYPE,REGISTRATION_DATE,REGISTRATION_INVITATION, CONVERSATION_STATUS) 
         VALUES ({user_info["id"]}, '{user_info["name"]}', {user_info["rol"]}, '{user_info["type"]}', {user_info["registration_date"]}, '{user_info["registration_invitation"]}', 0)
     """
-    logging.info(query)
-    conn.execute(query)
+    log_and_query(conn, query)
     conn.commit()
     logging.info("Records created successfully")
     conn.close()
@@ -98,8 +109,7 @@ def generate_new_invitations(db_name, num_invitations=1, user_id=None):
         if user_id is not None:
             # Verify that the user exists in the USERS table
             query = f"SELECT COUNT(*) FROM USERS WHERE ID={user_id}"
-            logging.info(query)
-            cursor = conn.execute(query)
+            log_and_query(conn, query)
             user_exist = cursor.fetchone()[0] == 1
             
             if user_exist:
@@ -111,8 +121,7 @@ def generate_new_invitations(db_name, num_invitations=1, user_id=None):
                 logging.error(f"Cannot assign invitations. User {user_id} does not exist")
                 break
                 
-        logging.info(query)
-        conn.execute(query)
+        log_and_query(conn, query)
         conn.commit()
         logging.info("Records created successfully")
     conn.close()
@@ -129,8 +138,7 @@ def provision_superadmin(db_name, superadmin_id):
     # Verify that the user does not exist in the USERS table
     conn = sqlite3.connect(db_name)
     query = f"SELECT COUNT(*) FROM USERS WHERE ID={first_user_id}"
-    logging.info(query)
-    cursor = conn.execute(query)
+    log_and_query(conn, query)
     user_exist = cursor.fetchone()[0] == 1
     if user_exist:
         logging.error("ERROR: First user already provisioned")
@@ -145,3 +153,23 @@ def provision_superadmin(db_name, superadmin_id):
         "registration_invitation": "0000"
     }
     insert_in_users(db_name, user_info)
+
+
+def get_user_available_invitations(db_name, user_id):
+    """
+    Get available of a user, given it's user_id
+        
+        Parameters:
+            db_name (str): SQLite 3 DB file
+            user_id (int): Telegram ID of the user 
+    """
+    conn = sqlite3.connect(db_name)
+    query = f"SELECT INVITATION FROM INVITATIONS WHERE INVITING_USER_ID={user_id} AND INVITATION_USED=0"
+
+    query = f"SELECT COUNT(*) FROM USERS WHERE ID={first_user_id}"
+    logging.info(query)
+    cursor = conn.execute(query)
+    user_exist = cursor.fetchone()[0] == 1
+    if user_exist:
+        logging.error("ERROR: First user already provisioned")
+        return
