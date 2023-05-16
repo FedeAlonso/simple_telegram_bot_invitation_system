@@ -11,12 +11,15 @@ def log_and_query(conn, query):
     """
     Log a query and execute it.
 
-        Parameters:
-            conn (connection object): SQLite3 connection object
-            query (str): Query to execute
+    Parameters:
+        conn (connection object): SQLite3 connection object
+        query (str): Query to execute
+
+    Return: Query execution cursor        
     """
     logging.info(query)
-    conn.execute(query)
+    cursor = conn.execute(query)
+    return cursor
 
 
 def create_db_if_not_exist(db_name):
@@ -109,7 +112,7 @@ def generate_new_invitations(db_name, num_invitations=1, user_id=None):
         if user_id is not None:
             # Verify that the user exists in the USERS table
             query = f"SELECT COUNT(*) FROM USERS WHERE ID={user_id}"
-            log_and_query(conn, query)
+            cursor = log_and_query(conn, query)
             user_exist = cursor.fetchone()[0] == 1
             
             if user_exist:
@@ -137,15 +140,15 @@ def provision_superadmin(db_name, superadmin_id):
     """
     # Verify that the user does not exist in the USERS table
     conn = sqlite3.connect(db_name)
-    query = f"SELECT COUNT(*) FROM USERS WHERE ID={first_user_id}"
-    log_and_query(conn, query)
+    query = f"SELECT COUNT(*) FROM USERS WHERE ID={superadmin_id}"
+    cursor = log_and_query(conn, query)
     user_exist = cursor.fetchone()[0] == 1
     if user_exist:
         logging.error("ERROR: First user already provisioned")
         return
     
     user_info = {
-        "id": first_user_id,
+        "id": superadmin_id,
         "name": "super_admin",
         "rol": 0,
         "type": "super_admin",
@@ -159,17 +162,44 @@ def get_user_available_invitations(db_name, user_id):
     """
     Get available of a user, given it's user_id
         
-        Parameters:
-            db_name (str): SQLite 3 DB file
-            user_id (int): Telegram ID of the user 
+    Parameters:
+        db_name (str): SQLite 3 DB file
+        user_id (int): Telegram ID of the user 
+
+    Return:
+        invitations_list: List of active invitations
     """
     conn = sqlite3.connect(db_name)
     query = f"SELECT INVITATION FROM INVITATIONS WHERE INVITING_USER_ID={user_id} AND INVITATION_USED=0"
+    cursor = log_and_query(conn, query)
+    invitations = cursor.fetchall()
+    invitations_list = [x[0] for x in invitations]
+    return invitations_list
 
-    query = f"SELECT COUNT(*) FROM USERS WHERE ID={first_user_id}"
-    logging.info(query)
-    cursor = conn.execute(query)
-    user_exist = cursor.fetchone()[0] == 1
-    if user_exist:
-        logging.error("ERROR: First user already provisioned")
-        return
+
+def use_invitation(db_name, invitation):
+    """
+    Check if an invitation is valid (is not used), and disable (use) it if it's valid.
+
+    Parameters: 
+        db_name (str): SQLite 3 DB file
+        invitation: Invitation to check
+
+    Return: True if invitation is valid, false if not
+    """
+    conn = sqlite3.connect(db_name)
+    # Check if the invitation is available
+    query = f"SELECT COUNT(*) FROM INVITATIONS WHERE INVITATION='{invitation}' AND INVITATION_USED=0"
+    cursor = log_and_query(conn, query)
+    invitation_valid = cursor.fetchone()[0] == 1
+    if invitation_valid:
+        logging.info(f"INVITATION {invitation} VALID")
+        query = f"UPDATE INVITATIONS SET INVITATION_USED=1 WHERE INVITATION='{invitation}'"
+        log_and_query(conn, query)
+        conn.commit()
+        return True
+    logging.info(f"INVITATION {invitation} NOT VALID")
+    return False
+
+
+        

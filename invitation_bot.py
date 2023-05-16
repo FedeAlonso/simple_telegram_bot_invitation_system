@@ -9,7 +9,7 @@ import json
 from telegram import ForceReply, Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
-from utils.db.db import create_db_if_not_exist, create_tables_if_not_exist, insert_in_users, generate_new_invitations, provision_database
+from utils.db.db import create_db_if_not_exist, create_tables_if_not_exist, insert_in_users, generate_new_invitations, provision_superadmin, get_user_available_invitations, use_invitation
 
 # Load config 
 CONFIG_FILE = "resources/config.json"
@@ -83,7 +83,10 @@ def main() -> None:
     # DB Readiness
     create_db_if_not_exist(CONFIG.get('db_config').get('db_file'))
     create_tables_if_not_exist(CONFIG.get('db_config').get('db_file'))
-    provision_database(CONFIG.get('db_config').get('db_file'), 0000)
+    provision_superadmin(CONFIG.get('db_config').get('db_file'), 0000)
+    # generate_new_invitations(CONFIG.get('db_config').get('db_file'), 10, 0)
+    get_user_available_invitations(CONFIG.get('db_config').get('db_file'), 0)
+    use_invitation(CONFIG.get('db_config').get('db_file'), 'gj4j0oum')
     # generate_new_invitations(CONFIG.get('db_config').get('db_file'), 10)
     # generate_new_invitations(CONFIG.get('db_config').get('db_file'))
     # generate_new_invitations(CONFIG.get('db_config').get('db_file'), 10, 0)
