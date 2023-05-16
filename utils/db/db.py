@@ -79,7 +79,14 @@ def insert_in_users(db_name, user_info):
 
 
 def generate_new_invitations(db_name, num_invitations=1, user_id=None):
-
+    """
+    Create new invitations and assign them to a user
+        
+        Parameters:
+            db_name (str): SQLite 3 DB file
+            num_invitations (int): Num. of invitations to assign
+            user_id (int): Telegram ID of the user which is going to get the invitations
+    """
     characters = string.ascii_lowercase + string.digits
     conn = sqlite3.connect(db_name)
     for i in range(num_invitations):
@@ -111,9 +118,13 @@ def generate_new_invitations(db_name, num_invitations=1, user_id=None):
     conn.close()
 
 
-def provision_database(db_name, first_user_id):
+def provision_superadmin(db_name, superadmin_id):
     """
     Provision a first user in order to make everything work
+        
+        Parameters:
+            db_name (str): SQLite 3 DB file
+            superadmin_id (int): Telegram ID of the superadmin user
     """
     # Verify that the user does not exist in the USERS table
     conn = sqlite3.connect(db_name)
