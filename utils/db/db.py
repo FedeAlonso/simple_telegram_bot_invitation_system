@@ -23,6 +23,12 @@ def log_and_query(conn, query):
 
 
 def create_db_if_not_exist(db_name):
+    """
+    Create a DB File if not previously exist
+
+    Parameters:
+        db_name (str): DB File 
+    """
 
     #Check if db not exists:
     if not Path(db_name).is_file():
@@ -39,22 +45,23 @@ def create_db_if_not_exist(db_name):
 
 def create_tables_if_not_exist(db_name):
     """
-    USERS:
-        ID: Telegram ID
-        NAME: Telegram NAME
-        ROL: 0: Super Admin
-             1: Admin
-             2: User
-        TYPE: We can have different types of Users. Like customers, assistants, inviters
-        REGISTRATION_DATE: Registration date
-        REGISTRATION_INVITATION: Invitation from INVITATIONS table
-        CONVERSATION_STATUS: To maintain the conversation after an update. 0 by default. Also can be modified to 1 if /cancel
-    
-    INVITATIONS:
-        ID: Autoincrement PK
-        INVITATION: Invitation
-        INVITATING_USER_ID: User ID who is inviting someone
-        INVITATION_USED: 0 if not, 1 if already used
+    Create the DB tables:
+        USERS:
+            ID: Telegram ID
+            NAME: Telegram NAME
+            ROL: 0: Super Admin
+                1: Admin
+                2: User
+            TYPE: We can have different types of Users. Like customers, assistants, inviters
+            REGISTRATION_DATE: Registration date
+            REGISTRATION_INVITATION: Invitation from INVITATIONS table
+            CONVERSATION_STATUS: To maintain the conversation after an update. 0 by default. Also can be modified to 1 if /cancel
+        
+        INVITATIONS:
+            ID: Autoincrement PK
+            INVITATION: Invitation
+            INVITATING_USER_ID: User ID who is inviting someone
+            INVITATION_USED: 0 if not, 1 if already used
     """
 
     conn = sqlite3.connect(db_name)
@@ -98,6 +105,21 @@ def user_already_exist(db_name, user_id, conn=None):
 
 
 def insert_in_users(db_name, user_info):
+    """
+    Insert a new user in the USERS table
+
+    Parameters:
+        db_name (str): DB File
+        user_info (dict): An object with the following structure:
+            {
+                "id": Telegram ID,
+                "name": Telegram first_name,
+                "rol": Rol as described in the DB,
+                "type": str with an abstract value, as described in the DB,
+                "registration_date": int with the format "%Y%m%d%H%M%S",
+                "registration_invitation": used_invitation
+            }
+    """
 
     conn = sqlite3.connect(db_name)
     query =  f"""

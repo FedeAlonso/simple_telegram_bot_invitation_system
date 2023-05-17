@@ -1,7 +1,5 @@
 {
-    "output_folder": "_output",
     "db_config": {
-        "db_file": "resources/db/telegram_invitation_bot.db",
-        "db_roles": []
+        "db_file": "resources/db/telegram_invitation_bot.db"
     }
 }
